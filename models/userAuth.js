@@ -12,6 +12,7 @@ const userSchema = new mongoose.Schema(
     hashed_password: {
       type: String,
     },
+    otp: { type: String },
     salt: String,
     role: {
       type: String,

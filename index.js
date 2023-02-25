@@ -1,6 +1,5 @@
 const express = require("express");
 const app = express();
-const dotenv = require("dotenv");
 const mongoose = require("mongoose");
 const bodyParser = require("body-parser");
 const cookieParser = require("cookie-parser");
@@ -8,15 +7,15 @@ const morgan = require("morgan");
 const cors = require("cors");
 
 //import routes
-const userAuth = require("./models/userAuth");
+const userAuth = require("./routes/authRoutes");
 
-dotenv.config();
+require("dotenv").config();
 
 //middlewares
+app.use(cors());
+app.use(morgan("dev"));
 app.use(bodyParser.json());
 app.use(cookieParser());
-app.use(morgan("dev"));
-app.use(cors());
 app.use("/api", userAuth);
 
 //connect to DB
