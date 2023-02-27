@@ -8,6 +8,8 @@ const cors = require("cors");
 
 //import routes
 const userAuth = require("./routes/authRoutes");
+const chatRoutes = require("./routes/convRoutes");
+const messageRoutes = require("./routes/message");
 
 require("dotenv").config();
 
@@ -17,6 +19,8 @@ app.use(morgan("dev"));
 app.use(bodyParser.json());
 app.use(cookieParser());
 app.use("/api", userAuth);
+app.use("/api", chatRoutes);
+app.use("/api", messageRoutes);
 
 //connect to DB
 const connectDB = async () => {

@@ -51,6 +51,7 @@ exports.signup = async (req, res) => {
       <p>This email may contain sensitive information<p/>
       <p>${process.env.CLIENT_URL}<p/>`,
     };
+
     await newUser.save();
     sng.send(emailData).then(() => {
       return res
@@ -58,7 +59,7 @@ exports.signup = async (req, res) => {
         .json({ message: `Email has been sent to ${email}.` });
     });
   } catch (err) {
-    res.status(400).json({ message: "Access Denied" });
+    res.status(400).json(err.message);
   }
 };
 
@@ -92,7 +93,7 @@ exports.filldetails = async (req, res, next) => {
   try {
     const userId = req.params.userId;
     const { fullname, username, phone, DOB } = req.fields;
-    const { photo } = req.files;
+    const { profilepic } = req.files;
 
     switch (true) {
       case !fullname.trim():
@@ -101,12 +102,12 @@ exports.filldetails = async (req, res, next) => {
         res.json({ err: "UserName is required" });
       case !DOB:
         res.json({ err: "Date of Birth is required" });
-      case !photo || photo.length > 500000:
+      case !profilepic || profilepic.length > 500000:
         res.json({ err: "Image must be less than 5mb" });
     }
     await User.findByIdAndUpdate(
       { _id: userId },
-      { fullname, username, phone, DOB, photo },
+      { fullname, username, phone, DOB, profilepic },
       { new: true }
     )
       .then((updatedUser) => {

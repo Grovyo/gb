@@ -6,7 +6,7 @@ const userSchema = new mongoose.Schema(
     email: {
       type: String,
       trim: true,
-      unique: true,
+
       maxLength: 50,
     },
     hashed_password: {
@@ -32,8 +32,9 @@ const userSchema = new mongoose.Schema(
       type: String,
       maxLength: 30,
       unique: true,
+      trim: true,
     },
-    photo: {
+    profilepic: {
       data: Buffer,
       contentType: String,
     },
