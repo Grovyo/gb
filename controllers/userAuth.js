@@ -12,13 +12,9 @@ exports.signup = async (req, res) => {
   if (oldUser) {
     try {
       const otp = Math.floor(10000 + Math.random() * 90000);
-      const token = jwt.sign(
-        { email, otp },
-        process.env.JWT_ACCOUNT_ACTIVATION,
-        {
-          expiresIn: "10m",
-        }
-      );
+      const token = jwt.sign({ email }, process.env.JWT_ACCOUNT_ACTIVATION, {
+        expiresIn: "10m",
+      });
 
       const emailData = {
         from: process.env.EMAIL_FROM,
@@ -38,7 +34,7 @@ exports.signup = async (req, res) => {
     }
   }
   try {
-    const token = jwt.sign({ email, otp }, process.env.JWT_ACCOUNT_ACTIVATION, {
+    const token = jwt.sign({ email }, process.env.JWT_ACCOUNT_ACTIVATION, {
       expiresIn: "10m",
     });
 
