@@ -2,6 +2,17 @@ const User = require("../models/userAuth");
 const jwt = require("jsonwebtoken");
 const sng = require("@sendgrid/mail");
 const { errorHandler } = require("../helpers/dbErrorHandler");
+const multer = require("multer");
+const Minio = require("minio");
+const Test = require("../models/test");
+const uuid = require("uuid").v4;
+const minioClient = new Minio.Client({
+  endPoint: "192.168.1.50",
+  port: 9000,
+  useSSL: false,
+  accessKey: "shreyansh379",
+  secretKey: "shreyansh379",
+});
 
 exports.signup = async (req, res) => {
   sng.setApiKey(process.env.SENDGRID_API_KEY);
@@ -15,7 +26,6 @@ exports.signup = async (req, res) => {
       const token = jwt.sign({ email }, process.env.JWT_ACCOUNT_ACTIVATION, {
         expiresIn: "10m",
       });
-
       const emailData = {
         from: process.env.EMAIL_FROM,
         to: email,
@@ -37,7 +47,6 @@ exports.signup = async (req, res) => {
     const token = jwt.sign({ email }, process.env.JWT_ACCOUNT_ACTIVATION, {
       expiresIn: "10m",
     });
-
     const emailData = {
       from: process.env.EMAIL_FROM,
       to: email,
@@ -85,40 +94,39 @@ exports.verify = async (req, res) => {
     res.status(400).json({ message: "Access Denied" });
   }
 };
-exports.filldetails = async (req, res, next) => {
-  try {
-    const userId = req.params.userId;
-    const { fullname, username, phone, DOB } = req.fields;
-    const { profilepic } = req.files;
 
-    switch (true) {
-      case !fullname.trim():
-        res.json({ err: "Name is required" });
-      case !username:
-        res.json({ err: "UserName is required" });
-      case !DOB:
-        res.json({ err: "Date of Birth is required" });
-      case !profilepic || profilepic.length > 500000:
-        res.json({ err: "Image must be less than 5mb" });
-    }
-    await User.findByIdAndUpdate(
+exports.filldetails = async (req, res, next) => {
+  const { originalname, buffer } = req.file;
+  const { fullname, username, phone, DOB } = req.body;
+  const { userId } = req.params;
+  const uuidString = uuid();
+  try {
+    // Save image to Minio
+    const bucketName = "images";
+    const objectName = `${Date.now()}_${uuidString}_${originalname}`;
+    await minioClient.putObject(bucketName, objectName, buffer, buffer.length);
+
+    const image = await User.findByIdAndUpdate(
       { _id: userId },
-      { fullname, username, phone, DOB, profilepic },
+      {
+        $set: {
+          fullname: fullname,
+          profilepic: objectName,
+          username: username,
+          phone: phone,
+          DOB: DOB,
+        },
+      },
       { new: true }
-    )
-      .then((updatedUser) => {
-        res.json(updatedUser);
-      })
-      .catch((error) => {
-        console.error(error);
-        res.status(500).json({ error: "Failed to update user details" });
-      });
+    );
+
+    res.status(200).json(image);
   } catch (err) {
-    return res.status(400).json({
-      error: errorHandler(err),
-    });
+    console.error(err);
+    res.status(500).json({ message: "Server error" });
   }
 };
+
 exports.interests = async (req, res) => {
   try {
     const userId = req.params.userId;
@@ -139,5 +147,31 @@ exports.interests = async (req, res) => {
     return res.status(400).json({
       error: errorHandler(err),
     });
+  }
+};
+
+exports.gettest = async (req, res) => {
+  const { id } = req.params;
+  try {
+    // Find the image metadata in MongoDB
+    const image = await Test.findById(id);
+    if (!image) {
+      return res.status(404).json({ message: "Image not found" });
+    }
+
+    // Get image file from Minio
+    const [bucketName, objectName] = image.location.split("/");
+    const stream = await minioClient.getObject(bucketName, objectName);
+
+    // Set response headers
+    res.setHeader("Content-Type", stream.headers["content-type"]);
+    res.setHeader("Content-Length", stream.headers["content-length"]);
+    res.setHeader("Content-Disposition", `inline; filename="${image.name}"`);
+
+    // Pipe the file stream to the response
+    stream.pipe(res);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Server error" });
   }
 };

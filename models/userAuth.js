@@ -1,12 +1,12 @@
 const mongoose = require("mongoose");
 const crypto = require("crypto");
+const { ObjectId } = mongoose.Schema;
 
 const userSchema = new mongoose.Schema(
   {
     email: {
       type: String,
       trim: true,
-
       maxLength: 50,
     },
     hashed_password: {
@@ -31,12 +31,10 @@ const userSchema = new mongoose.Schema(
     username: {
       type: String,
       maxLength: 30,
-      unique: true,
       trim: true,
     },
     profilepic: {
-      data: Buffer,
-      contentType: String,
+      type: String,
     },
     interest: {
       type: [String],
@@ -61,15 +59,11 @@ const userSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
-    products: {
-      type: [String],
-    },
-    posts: {
-      type: [String],
-    },
     settings: {
       type: [String],
     },
+    desc: { type: String, maxLength: 500 },
+    shortdesc: { type: String, maxLength: 150 },
   },
   { timestamps: true }
 );

@@ -1,0 +1,26 @@
+const mongoose = require("mongoose");
+const { ObjectId } = mongoose.Schema;
+
+const replySchema = new mongoose.Schema(
+  {
+    senderId: {
+      type: ObjectId,
+      ref: "User",
+      required: true,
+    },
+    postId: { type: ObjectId, ref: "Post", required: true },
+    commentId: { type: ObjectId, ref: "Comment", required: true },
+    text: {
+      type: String,
+      required: true,
+    },
+    dp: { type: String },
+    name: { type: String },
+    like: { type: Number, default: 0 },
+    disklike: { type: Number, default: 0 },
+    reply: { type: [String] },
+  },
+  { timestamps: true }
+);
+
+module.exports = mongoose.model("Comment", replySchema);
