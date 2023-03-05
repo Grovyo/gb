@@ -13,6 +13,7 @@ const minioClient = new Minio.Client({
   secretKey: "shreyansh379",
 });
 
+//signup via email
 exports.signup = async (req, res) => {
   sng.setApiKey(process.env.SENDGRID_API_KEY);
   const otp = Math.floor(10000 + Math.random() * 90000);
@@ -64,6 +65,36 @@ exports.signup = async (req, res) => {
     });
   } catch (err) {
     res.status(400).json(err.message);
+  }
+};
+
+//signup via mobile
+exports.signupmobile = async (req, res) => {
+  const { phone } = req.body;
+  try {
+    const user = await User.findOne({ phone: phone });
+    if (user) {
+      const token = jwt.sign({ phone }, process.env.JWT_ACCOUNT_ACTIVATION, {
+        expiresIn: "7d",
+      });
+      res
+        .status(200)
+        .json({ message: "user exists signup via mobile success", token });
+    }
+    if (!user) {
+      const u = new User({ phone: phone });
+      const token = jwt.sign({ phone }, process.env.JWT_ACCOUNT_ACTIVATION, {
+        expiresIn: "7d",
+      });
+      await u.save();
+      res.status(200).json({
+        message: "signup via mobile success",
+        token,
+        user: { role, _id },
+      });
+    }
+  } catch (e) {
+    res.status(400).json({ message: e.message });
   }
 };
 
@@ -172,30 +203,5 @@ exports.gettest = async (req, res) => {
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: "Server error" });
-  }
-};
-
-exports.signupmobile = async (req, res) => {
-  const { phone } = req.body;
-  try {
-    const user = await User.findOne({ phone: phone });
-    if (user) {
-      const token = jwt.sign({ phone }, process.env.JWT_ACCOUNT_ACTIVATION, {
-        expiresIn: "7d",
-      });
-      res
-        .status(200)
-        .json({ message: "user exists signup via mobile success", token });
-    }
-    if (!user) {
-      const u = new User({ phone: phone });
-      const token = jwt.sign({ phone }, process.env.JWT_ACCOUNT_ACTIVATION, {
-        expiresIn: "7d",
-      });
-      await u.save();
-      res.status(200).json({ message: "signup via mobile success", token });
-    }
-  } catch (e) {
-    res.status(400).json({ message: e.message });
   }
 };
