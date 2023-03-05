@@ -77,12 +77,14 @@ exports.signupmobile = async (req, res) => {
       const token = jwt.sign({ phone }, process.env.JWT_ACCOUNT_ACTIVATION, {
         expiresIn: "7d",
       });
-      res
-        .status(200)
-        .json({ message: "user exists signup via mobile success", token });
+      res.status(200).json({
+        message: "user exists signup via mobile success",
+        token,
+        user,
+      });
     }
     if (!user) {
-      const u = new User({ phone: phone });
+      const user = new User({ phone: phone });
       const token = jwt.sign({ phone }, process.env.JWT_ACCOUNT_ACTIVATION, {
         expiresIn: "7d",
       });
@@ -90,7 +92,7 @@ exports.signupmobile = async (req, res) => {
       res.status(200).json({
         message: "signup via mobile success",
         token,
-        user: { role, _id },
+        user,
       });
     }
   } catch (e) {
