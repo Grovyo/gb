@@ -13,6 +13,7 @@ const {
   test,
   gettest,
   signupmobile,
+  filldetailsphone,
 } = require("../controllers/userAuth");
 const { userbyId } = require("../controllers/user");
 
@@ -23,9 +24,17 @@ router.post("/signup", signup);
 router.post("/signup-mobile", signupmobile);
 router.post("/verify", verify);
 router.get("/signout", signout);
-router.post("/filldetails/:userId", upload.single("image"), filldetails);
+
+router.post("/filldetails-email/:userId", upload.single("image"), filldetails);
+
+router.post(
+  "/filldetails-phone/:userId",
+  upload.single("image"),
+  filldetailsphone
+);
 router.post("/interest/:userId", interests);
 router.get("/:id", gettest);
+router.post("/test", upload.single("image"), test);
 
 router.param("userId", userbyId);
 

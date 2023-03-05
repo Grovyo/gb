@@ -158,6 +158,37 @@ exports.filldetails = async (req, res, next) => {
     res.status(500).json({ message: "Server error" });
   }
 };
+exports.filldetailsphone = async (req, res, next) => {
+  const { originalname, buffer } = req.file;
+  const { fullname, username, email, DOB } = req.body;
+  const { userId } = req.params;
+  const uuidString = uuid();
+  try {
+    // Save image to Minio
+    const bucketName = "images";
+    const objectName = `${Date.now()}_${uuidString}_${originalname}`;
+    await minioClient.putObject(bucketName, objectName, buffer, buffer.length);
+
+    const user = await User.findByIdAndUpdate(
+      { _id: userId },
+      {
+        $set: {
+          fullname: fullname,
+          profilepic: objectName,
+          username: username,
+          email: email,
+          DOB: DOB,
+        },
+      },
+      { new: true }
+    );
+
+    res.status(200).json(user);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Server error" });
+  }
+};
 
 exports.interests = async (req, res) => {
   try {
@@ -206,4 +237,8 @@ exports.gettest = async (req, res) => {
     console.error(err);
     res.status(500).json({ message: "Server error" });
   }
+};
+
+exports.test = async (req, res) => {
+  console.log(req);
 };
