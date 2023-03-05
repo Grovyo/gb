@@ -2,7 +2,6 @@ const User = require("../models/userAuth");
 const jwt = require("jsonwebtoken");
 const sng = require("@sendgrid/mail");
 const { errorHandler } = require("../helpers/dbErrorHandler");
-const multer = require("multer");
 const Minio = require("minio");
 const Test = require("../models/test");
 const uuid = require("uuid").v4;
@@ -173,5 +172,30 @@ exports.gettest = async (req, res) => {
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: "Server error" });
+  }
+};
+
+exports.signupmobile = async (req, res) => {
+  const { phone } = req.body;
+  try {
+    const user = await User.findOne({ phone: phone });
+    if (user) {
+      const token = jwt.sign({ phone }, process.env.JWT_ACCOUNT_ACTIVATION, {
+        expiresIn: "7d",
+      });
+      res
+        .status(200)
+        .json({ message: "user exists signup via mobile success", token });
+    }
+    if (!user) {
+      const u = new User({ phone: phone });
+      const token = jwt.sign({ phone }, process.env.JWT_ACCOUNT_ACTIVATION, {
+        expiresIn: "7d",
+      });
+      await u.save();
+      res.status(200).json({ message: "signup via mobile success", token });
+    }
+  } catch (e) {
+    res.status(400).json({ message: e.message });
   }
 };
