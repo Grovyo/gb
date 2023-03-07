@@ -183,7 +183,7 @@ exports.filldetailsphone = async (req, res, next) => {
       { new: true }
     );
 
-    res.status(200).json(user);
+    res.status(200).json({ success: true });
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: "Server error" });
@@ -193,7 +193,8 @@ exports.filldetailsphone = async (req, res, next) => {
 exports.interests = async (req, res) => {
   try {
     const userId = req.params.userId;
-    const { interest } = req.body;
+    const interest = req.body.data;
+    console.log(req.body.data);
     await User.findByIdAndUpdate(
       { _id: userId },
       { $addToSet: { interest: interest } },
@@ -240,5 +241,5 @@ exports.gettest = async (req, res) => {
 };
 
 exports.test = async (req, res) => {
-  console.log(req);
+  console.log(req.body.data);
 };
