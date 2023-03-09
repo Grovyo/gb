@@ -1,4 +1,5 @@
 const Community = require("../models/community");
+const User = require("../models/userAuth");
 const uuid = require("uuid").v4;
 const Minio = require("minio");
 
@@ -37,6 +38,66 @@ exports.create = async (req, res) => {
 
     await community.save();
     res.status(200).json(community);
+  } catch (e) {
+    res.status(400).json(e.message);
+  }
+};
+
+//community join
+exports.joinmember = async (req, res) => {
+  const { userId, comId } = req.params;
+  const user = await User.findById(userId);
+  const community = await Community.findById(comId);
+  if (!comId) {
+    res.status(400).json({ message: "Community not found" });
+  }
+  const isOwner = community.creator.equals(user._id);
+  const isSubscriber = community.members.includes(user._id);
+  try {
+    if (isOwner) {
+      res.status(201).json({ message: "You can't join your own community!" });
+    } else if (isSubscriber) {
+      res.status(201).json({ message: "Already Subscriber" });
+    } else {
+      await Community.updateOne(
+        { _id: comId },
+        { $push: { members: user._id }, $inc: { memberscount: 1 } }
+      );
+      await User.updateOne(
+        { _id: userId },
+        { $push: { communityjoined: community._id }, $inc: { totalcom: 1 } }
+      );
+      res.status(200).json({ success: true });
+    }
+  } catch (e) {
+    res.status(400).json(e.message);
+  }
+};
+
+//community unjoin
+exports.unjoinmember = async (req, res) => {
+  const { userId, comId } = req.params;
+  const user = await User.findById(userId);
+  const community = await Community.findById(comId);
+
+  const isOwner = community.creator.equals(user._id);
+  const isSubscriber = community.members.includes(user._id);
+  try {
+    if (isOwner) {
+      res.status(201).json({ message: "You can't unjoin your own community!" });
+    } else if (!isSubscriber) {
+      res.status(201).json({ message: "Not Subscribed" });
+    } else {
+      await Community.updateOne(
+        { _id: comId },
+        { $pull: { members: user._id }, $inc: { memberscount: -1 } }
+      );
+      await User.updateOne(
+        { _id: userId },
+        { $pull: { communityjoined: community._id }, $inc: { totalcom: -1 } }
+      );
+      res.status(200).json({ success: true });
+    }
   } catch (e) {
     res.status(400).json(e.message);
   }

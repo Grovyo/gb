@@ -3,6 +3,7 @@ const { ObjectId } = mongoose.Schema;
 
 const PostSchema = new mongoose.Schema(
   {
+    likedby: [{ type: ObjectId, ref: "User", required: true }],
     likes: { type: Number, default: 0 },
     comments: { type: [String], default: [] },
     tags: { type: [String] },

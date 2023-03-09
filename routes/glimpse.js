@@ -4,8 +4,20 @@ const multer = require("multer");
 const storage = multer.memoryStorage();
 const upload = multer({ storage: storage });
 
-const { create } = require("../controllers/glimpse");
+const {
+  create,
+  fetchglimpse,
+  fetchoneglimpse,
+  likeglimpse,
+  dislikeglimpse,
+  deleteglimpse,
+} = require("../controllers/glimpse");
 
 router.post("/glimpse/:userId", upload.single("video"), create);
+router.get("/fetchglimpse/:userId", fetchglimpse);
+router.get("/fetchoneglimpse/:glimpseId", fetchoneglimpse);
+router.post("/likeglimpse/:glimpseId", likeglimpse);
+router.post("/dislikeglimpse/:glimpseId", dislikeglimpse);
+router.delete("/deleteglimpse/:userId/:glimpseId", deleteglimpse);
 
 module.exports = router;

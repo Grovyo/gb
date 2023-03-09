@@ -7,6 +7,8 @@ const communitySchema = new mongoose.Schema(
     members: { type: Number, required: true, default: 0 },
     creator: { type: ObjectId, ref: "User", required: true },
     dp: { type: String, required: true },
+    members: [{ type: ObjectId, ref: "User", required: true }],
+    memberscount: { type: Number, default: 0 },
   },
   { timestamps: true }
 );

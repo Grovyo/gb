@@ -19,6 +19,7 @@ const commentRoutes = require("./routes/comment");
 const reviewRoutes = require("./routes/review");
 const orderRoutes = require("./routes/order");
 const glimpseRoutes = require("./routes/glimpse");
+const replyRoutes = require("./routes/reply");
 
 require("dotenv").config();
 
@@ -39,6 +40,7 @@ app.use("/api", commentRoutes);
 app.use("/api", reviewRoutes);
 app.use("/api", orderRoutes);
 app.use("/api", glimpseRoutes);
+app.use("/api", replyRoutes);
 
 //connect to DB
 const connectDB = async () => {

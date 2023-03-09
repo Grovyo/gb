@@ -17,7 +17,8 @@ const commentSchema = new mongoose.Schema(
     name: { type: String },
     like: { type: Number, default: 0 },
     disklike: { type: Number, default: 0 },
-    reply: { type: [String] },
+    repliedby: [{ type: ObjectId, ref: "User" }],
+    replycount: { type: Number, default: 0 },
   },
   { timestamps: true }
 );

@@ -64,6 +64,9 @@ const userSchema = new mongoose.Schema(
     },
     desc: { type: String, maxLength: 500 },
     shortdesc: { type: String, maxLength: 150 },
+    communityjoined: [{ type: ObjectId, ref: "Community", required: true }],
+    totalcom: { type: Number, default: 0 },
+    likedposts: [{ type: ObjectId, ref: "Post", required: true }],
   },
   { timestamps: true }
 );

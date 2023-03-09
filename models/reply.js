@@ -8,7 +8,6 @@ const replySchema = new mongoose.Schema(
       ref: "User",
       required: true,
     },
-    postId: { type: ObjectId, ref: "Post", required: true },
     commentId: { type: ObjectId, ref: "Comment", required: true },
     text: {
       type: String,
@@ -18,9 +17,8 @@ const replySchema = new mongoose.Schema(
     name: { type: String },
     like: { type: Number, default: 0 },
     disklike: { type: Number, default: 0 },
-    reply: { type: [String] },
   },
   { timestamps: true }
 );
 
-module.exports = mongoose.model("Comment", replySchema);
+module.exports = mongoose.model("Reply", replySchema);

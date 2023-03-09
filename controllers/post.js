@@ -102,7 +102,7 @@ exports.createVideo = async (req, res) => {
   } else {
     try {
       const size = buffer.byteLength;
-      const bucketName = "videos";
+      const bucketName = "posts";
       const objectName = `${Date.now()}_${uuidString}_${originalname}`;
       console.log(objectName);
       await minioClient.putObject(
@@ -142,6 +142,7 @@ exports.getpost = async (req, res) => {
   }
 };
 
+//function to generate a presignedurl of minio
 async function generatePresignedUrl(bucketName, objectName, expiry = 604800) {
   try {
     const presignedUrl = await minioClient.presignedGetObject(
@@ -155,7 +156,8 @@ async function generatePresignedUrl(bucketName, objectName, expiry = 604800) {
     throw new Error("Failed to generate presigned URL");
   }
 }
-//fetch userfeed
+
+//fetch userfeed acc to interests
 exports.fetchfeed = async (req, res) => {
   try {
     const { userId } = req.params;
@@ -176,7 +178,7 @@ exports.fetchfeed = async (req, res) => {
     const urls = [];
     for (let i = 0; i < post.length; i++) {
       const a = await generatePresignedUrl(
-        "videos",
+        "posts",
         post[i].post.toString(),
         60 * 60
       );
@@ -185,5 +187,89 @@ exports.fetchfeed = async (req, res) => {
     res.status(200).json({ data: { urls, dps, post } });
   } catch (err) {
     res.status(500).json({ message: err.message });
+  }
+};
+
+//fetch one post
+exports.fetchonepost = async (req, res) => {
+  const { postId } = req.params;
+  const post = await Post.findById(postId).populate(
+    "sender",
+    "fullname profilepic"
+  );
+  console.log(post);
+  if (!post) {
+    res.status(404).json({ message: "Post not found" });
+  } else {
+    try {
+      const dp = await generatePresignedUrl(
+        "images",
+        post.sender.profilepic.toString(),
+        60 * 60
+      );
+      const url = await generatePresignedUrl(
+        "posts",
+        post.post[0].toString(),
+        60 * 60
+      );
+      res.status(200).json({ data: { post, url, dp } });
+    } catch (e) {
+      res.status(400).json({ message: e.message });
+    }
+  }
+};
+
+//like a post
+exports.likepost = async (req, res) => {
+  const { userId, postId } = req.params;
+  const user = await User.findById(userId);
+  const post = await Post.findById(postId);
+  if (!post) {
+    res.status(400).json({ message: "No post found" });
+  }
+  try {
+    await Post.updateOne(
+      { _id: postId },
+      { $push: { likedby: user._id }, $inc: { likes: 1 } }
+    );
+    await User.updateOne({ _id: userId }, { $push: { likedposts: post._id } });
+    res.status(200).json({ success: true });
+  } catch (e) {
+    res.status(400).json({ message: e.message });
+  }
+};
+
+//dislike a post
+exports.dislikepost = async (req, res) => {
+  const { userId, postId } = req.params;
+  const user = await User.findById(userId);
+  const post = await Post.findById(postId);
+  if (!post) {
+    res.status(400).json({ message: "No post found" });
+  }
+  try {
+    await Post.updateOne(
+      { _id: postId },
+      { $pull: { likedby: user._id }, $inc: { dislikes: 1 } }
+    );
+    await User.updateOne({ _id: userId }, { $pull: { likedposts: post._id } });
+    res.status(200).json({ success: true });
+  } catch (e) {
+    res.status(400).json({ message: e.message });
+  }
+};
+
+//delete a post
+exports.deletepost = async (req, res) => {
+  const { userId, postId } = req.params;
+  const post = await Post.findById(postId);
+  if (!post) {
+    res.status(404).json({ message: "Post not found" });
+  } else if (post.sender.toString() !== userId) {
+    res.status(400).json({ message: "You can't delete others post" });
+  } else {
+    await minioClient.removeObject("posts", post.post[1]);
+    await Post.findByIdAndDelete(postId);
+    res.status(200).json({ success: true });
   }
 };
