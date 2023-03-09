@@ -81,6 +81,7 @@ exports.signupmobile = async (req, res) => {
         message: "user exists signup via mobile success",
         token,
         user,
+        userexists: true,
       });
     }
     if (!user) {
@@ -93,6 +94,7 @@ exports.signupmobile = async (req, res) => {
         message: "signup via mobile success",
         token,
         user,
+        userexists: false,
       });
     }
   } catch (e) {

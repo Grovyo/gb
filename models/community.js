@@ -4,6 +4,7 @@ const { ObjectId } = mongoose.Schema;
 const communitySchema = new mongoose.Schema(
   {
     title: { type: String, required: true },
+    members: { type: Number, required: true, default: 0 },
     creator: { type: ObjectId, ref: "User", required: true },
     dp: { type: String, required: true },
   },

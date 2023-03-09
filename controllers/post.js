@@ -1,4 +1,5 @@
 const Post = require("../models/post");
+const User = require("../models/userAuth");
 const uuid = require("uuid").v4;
 const Minio = require("minio");
 
@@ -103,6 +104,7 @@ exports.createVideo = async (req, res) => {
       const size = buffer.byteLength;
       const bucketName = "videos";
       const objectName = `${Date.now()}_${uuidString}_${originalname}`;
+      console.log(objectName);
       await minioClient.putObject(
         bucketName,
         objectName,
@@ -135,6 +137,52 @@ exports.getpost = async (req, res) => {
       "fullname profilepic"
     );
     res.status(200).json({ posts });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
+async function generatePresignedUrl(bucketName, objectName, expiry = 604800) {
+  try {
+    const presignedUrl = await minioClient.presignedGetObject(
+      bucketName,
+      objectName,
+      expiry
+    );
+    return presignedUrl;
+  } catch (err) {
+    console.error(err);
+    throw new Error("Failed to generate presigned URL");
+  }
+}
+//fetch userfeed
+exports.fetchfeed = async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const user = await User.findById(userId);
+    const post = await Post.find({ tags: { $in: user.interest } })
+      .populate("sender", "fullname profilepic")
+      .populate("community", "title dp members");
+
+    const dps = [];
+    for (let i = 0; i < post.length; i++) {
+      const a = await generatePresignedUrl(
+        "images",
+        post[i].community.dp.toString(),
+        60 * 60
+      );
+      dps.push(a);
+    }
+    const urls = [];
+    for (let i = 0; i < post.length; i++) {
+      const a = await generatePresignedUrl(
+        "videos",
+        post[i].post.toString(),
+        60 * 60
+      );
+      urls.push(a);
+    }
+    res.status(200).json({ data: { urls, dps, post } });
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
