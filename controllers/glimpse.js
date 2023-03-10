@@ -109,21 +109,34 @@ exports.fetchoneglimpse = async (req, res) => {
 
 //like a glimpse
 exports.likeglimpse = async (req, res) => {
-  const { glimpseId } = req.params;
-  const glimpse = await Glimpse.findByIdAndUpdate(glimpseId, {
-    $inc: { like: 1 },
-  });
+  const { userId, glimpseId } = req.params;
+  const user = await User.findById(userId);
+  const glimpse = await Glimpse.findById(glimpseId);
   if (!glimpse) {
     res.status(400).json({ message: "No glimpse found" });
+  } else if (glimpse.likedby.includes(userId)) {
+    await Glimpse.findByIdAndUpdate(glimpseId, {
+      $inc: { like: -1 },
+      $pull: { likedby: user._id },
+    });
+    res.status(200).json({ success: true });
+  } else if (!glimpse.likedby.includes(userId)) {
+    res.status(400).json({ success: false });
+  } else {
+    await Glimpse.findByIdAndUpdate(glimpseId, {
+      $inc: { like: 1 },
+      $push: { likedby: user._id },
+    });
+    res.status(200).json({ success: true });
   }
-  res.status(200).json({ success: true });
 };
 
-//dislike glimpse
+//dislike glimpse / not interested
 exports.dislikeglimpse = async (req, res) => {
-  const { glimpseId } = req.params;
+  const { userId, glimpseId } = req.params;
   const glimpse = await Glimpse.findByIdAndUpdate(glimpseId, {
     $inc: { dislike: 1 },
+    $push: { disklikedby: userId },
   });
   if (!glimpse) {
     res.status(400).json({ message: "No glimpse found" });

@@ -226,20 +226,34 @@ exports.likepost = async (req, res) => {
   const post = await Post.findById(postId);
   if (!post) {
     res.status(400).json({ message: "No post found" });
-  }
-  try {
-    await Post.updateOne(
-      { _id: postId },
-      { $push: { likedby: user._id }, $inc: { likes: 1 } }
-    );
-    await User.updateOne({ _id: userId }, { $push: { likedposts: post._id } });
-    res.status(200).json({ success: true });
-  } catch (e) {
-    res.status(400).json({ message: e.message });
+  } else if (post.likedby.includes(user._id)) {
+    try {
+      await Post.updateOne(
+        { _id: postId },
+        { $pull: { likedby: user._id }, $inc: { likes: -1 } }
+      );
+      res.status(200).json({ success: true });
+    } catch (e) {
+      res.status(400).json({ message: e.message });
+    }
+  } else {
+    try {
+      await Post.updateOne(
+        { _id: postId },
+        { $push: { likedby: user._id }, $inc: { likes: 1 } }
+      );
+      await User.updateOne(
+        { _id: userId },
+        { $push: { likedposts: post._id } }
+      );
+      res.status(200).json({ success: true });
+    } catch (e) {
+      res.status(400).json({ message: e.message });
+    }
   }
 };
 
-//dislike a post
+//dislike a post / not interested
 exports.dislikepost = async (req, res) => {
   const { userId, postId } = req.params;
   const user = await User.findById(userId);
@@ -250,7 +264,7 @@ exports.dislikepost = async (req, res) => {
   try {
     await Post.updateOne(
       { _id: postId },
-      { $pull: { likedby: user._id }, $inc: { dislikes: 1 } }
+      { $pull: { dislikedby: user._id }, $inc: { dsilike: 1 } }
     );
     await User.updateOne({ _id: userId }, { $pull: { likedposts: post._id } });
     res.status(200).json({ success: true });

@@ -16,8 +16,8 @@ const {
 router.post("/glimpse/:userId", upload.single("video"), create);
 router.get("/fetchglimpse/:userId", fetchglimpse);
 router.get("/fetchoneglimpse/:glimpseId", fetchoneglimpse);
-router.post("/likeglimpse/:glimpseId", likeglimpse);
-router.post("/dislikeglimpse/:glimpseId", dislikeglimpse);
+router.post("/likeglimpse/:userId/:glimpseId", likeglimpse);
+router.post("/dislikeglimpse/:userId/:glimpseId", dislikeglimpse);
 router.delete("/deleteglimpse/:userId/:glimpseId", deleteglimpse);
 
 module.exports = router;

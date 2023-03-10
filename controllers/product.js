@@ -10,6 +10,7 @@ const minioClient = new Minio.Client({
   secretKey: "shreyansh379",
 });
 
+// add a product
 exports.create = async (req, res) => {
   const { userId } = req.params;
   const {
@@ -28,7 +29,7 @@ exports.create = async (req, res) => {
   const image2 = req.files[1];
   const image3 = req.files[2];
   const image4 = req.files[3];
-
+  console.log(req.files);
   if (!image1 && !image2 && !image3 && !image4) {
     res.status(400).json({ message: "Must have one image" });
   } else {
@@ -36,7 +37,7 @@ exports.create = async (req, res) => {
       const uuidString = uuid();
       let a, b, c, d;
       if (image1) {
-        const bucketName = "images";
+        const bucketName = "products";
         const objectName = `${Date.now()}_${uuidString}_${image1.originalname}`;
         a = objectName;
         await minioClient.putObject(
@@ -47,7 +48,7 @@ exports.create = async (req, res) => {
         );
       }
       if (image2) {
-        const bucketName = "images";
+        const bucketName = "products";
         const objectName = `${Date.now()}_${uuidString}_${image2.originalname}`;
         b = objectName;
         await minioClient.putObject(
@@ -58,7 +59,7 @@ exports.create = async (req, res) => {
         );
       }
       if (image3) {
-        const bucketName = "images";
+        const bucketName = "products";
         const objectName = `${Date.now()}_${uuidString}_${image3.originalname}`;
         c = objectName;
         await minioClient.putObject(
@@ -69,7 +70,7 @@ exports.create = async (req, res) => {
         );
       }
       if (image4) {
-        const bucketName = "images";
+        const bucketName = "products";
         const objectName = `${Date.now()}_${uuidString}_${image4.originalname}`;
         d = objectName;
         await minioClient.putObject(
@@ -97,5 +98,86 @@ exports.create = async (req, res) => {
     } catch (e) {
       res.status(500).json({ message: e.message });
     }
+  }
+};
+
+//function to generate a presignedurl of minio
+async function generatePresignedUrl(bucketName, objectName, expiry = 604800) {
+  try {
+    const presignedUrl = await minioClient.presignedGetObject(
+      bucketName,
+      objectName,
+      expiry
+    );
+    return presignedUrl;
+  } catch (err) {
+    console.error(err);
+    throw new Error("Failed to generate presigned URL");
+  }
+}
+
+//get all products of a user
+exports.fetchallproducts = async (req, res) => {
+  const { userId } = req.params;
+  const product = await Product.find({ creator: userId });
+  try {
+    if (!product) {
+      res.status(404).json({ message: "Product not found" });
+    } else {
+      const urls = [];
+      for (let i = 0; i < product.length; i++) {
+        const a = await generatePresignedUrl(
+          "images",
+          product[i].images.toString(),
+          60 * 60
+        );
+        urls.push(a);
+      }
+      res.status(200).json({ data: { product, urls } });
+    }
+  } catch (e) {
+    res.status(400).json({ message: e.message });
+  }
+};
+
+//get a single product
+exports.getaproduct = async (req, res) => {
+  const { productId } = req.params;
+  const product = await Product.findById(productId);
+  try {
+    if (!product) {
+      res.status(404).json({ message: "Product not found" });
+    } else {
+      const urls = [];
+      for (let i = 0; i < product.length; i++) {
+        const a = await generatePresignedUrl(
+          "images",
+          product[i].images.toString(),
+          60 * 60
+        );
+        urls.push(a);
+      }
+      res.status(200).json({ data: { product, urls } });
+    }
+  } catch (e) {
+    res.status(400).json(e.message);
+  }
+};
+
+//delete a product
+exports.deleteproduct = async (req, res) => {
+  const { userId, productId } = req.params;
+  const product = await Product.findById(productId);
+  try {
+    if (!product) {
+      res.status(404).json({ message: "Product not found" });
+    } else if (product.creator.toString() != userId) {
+      res.status(404).json({ message: "You can't delete others products" });
+    } else {
+      await Product.findByIdAndDelete(productId);
+      res.status(200).json({ success: true });
+    }
+  } catch (e) {
+    res.status(400).json(e.message);
   }
 };

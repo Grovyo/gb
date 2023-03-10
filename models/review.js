@@ -16,6 +16,7 @@ const reviewSchema = new mongoose.Schema(
     dp: { type: String },
     name: { type: String },
     like: { type: Number, default: 0 },
+    likedby: [{ type: ObjectId, ref: "User" }],
     disklike: { type: Number, default: 0 },
     reply: { type: [String] },
     content: { type: String },

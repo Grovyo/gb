@@ -5,6 +5,8 @@ const PostSchema = new mongoose.Schema(
   {
     likedby: [{ type: ObjectId, ref: "User", required: true }],
     likes: { type: Number, default: 0 },
+    dislike: { type: Number, default: 0 },
+    dislikedby: [{ type: ObjectId, ref: "User", required: true }],
     comments: { type: [String], default: [] },
     tags: { type: [String] },
     views: { type: Number, default: 0 },
