@@ -12,6 +12,21 @@ const minioClient = new Minio.Client({
   secretKey: "shreyansh379",
 });
 
+//function to generate a presignedurl of minio
+async function generatePresignedUrl(bucketName, objectName, expiry = 604800) {
+  try {
+    const presignedUrl = await minioClient.presignedGetObject(
+      bucketName,
+      objectName,
+      expiry
+    );
+    return presignedUrl;
+  } catch (err) {
+    console.error(err);
+    throw new Error("Failed to generate presigned URL");
+  }
+}
+
 //Photo posting
 exports.createPhoto = async (req, res) => {
   const { userId, commId } = req.params;
@@ -156,21 +171,6 @@ exports.getpost = async (req, res) => {
   }
 };
 
-//function to generate a presignedurl of minio
-async function generatePresignedUrl(bucketName, objectName, expiry = 604800) {
-  try {
-    const presignedUrl = await minioClient.presignedGetObject(
-      bucketName,
-      objectName,
-      expiry
-    );
-    return presignedUrl;
-  } catch (err) {
-    console.error(err);
-    throw new Error("Failed to generate presigned URL");
-  }
-}
-
 //fetch userfeed acc to interests
 exports.fetchfeed = async (req, res) => {
   try {
@@ -214,11 +214,35 @@ exports.joinedcom = async (req, res) => {
   try {
     const community = await Community.find({
       members: { $in: user._id },
-    }).populate("posts", "post desc likes sender title tags");
+    });
     if (!community) {
-      res.status(404).json({ message: "No coommunity found" });
+      res.status(404).json({ message: "No community found" });
     } else {
-      res.status(200).json({ data: community });
+      for (let i = 0; i < community.length; i++) {
+        const posts = await Post.find({ community: community[i]._id })
+          .populate("sender", "fullname")
+          .sort({ createdAt: -1 })
+          .limit(1);
+        const dps = [];
+        for (let i = 0; i < community.length; i++) {
+          const a = await generatePresignedUrl(
+            "images",
+            community[i].dp.toString(),
+            60 * 60
+          );
+          dps.push(a);
+        }
+        const urls = [];
+        for (let i = 0; i < posts.length; i++) {
+          const a = await generatePresignedUrl(
+            "posts",
+            posts[i].post.toString(),
+            60 * 60
+          );
+          urls.push(a);
+        }
+        res.status(200).json({ data: { community, posts, dps, urls } });
+      }
     }
   } catch (e) {
     res.status(400).json({ message: e.message });
