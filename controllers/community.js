@@ -18,28 +18,35 @@ exports.create = async (req, res) => {
   const uuidString = uuid();
   if (!image) {
     res.status(400).json({ message: "Please upload an image" });
-  }
-
-  try {
-    const bucketName = "images";
-    const objectName = `${Date.now()}_${uuidString}_${image.originalname}`;
-    a = objectName;
-    await minioClient.putObject(
-      bucketName,
-      objectName,
-      image.buffer,
-      image.buffer.length
-    );
-    const community = new Community({
-      title,
-      creator: userId,
-      dp: objectName,
-    });
-
-    await community.save();
-    res.status(200).json(community);
-  } catch (e) {
-    res.status(400).json(e.message);
+  } else {
+    try {
+      const bucketName = "images";
+      const objectName = `${Date.now()}_${uuidString}_${image.originalname}`;
+      a = objectName;
+      await minioClient.putObject(
+        bucketName,
+        objectName,
+        image.buffer,
+        image.buffer.length
+      );
+      const community = new Community({
+        title,
+        creator: userId,
+        dp: objectName,
+      });
+      const savedcom = await community.save();
+      await Community.updateOne(
+        { _id: savedcom._id },
+        { $push: { members: userId }, $inc: { memberscount: 1 } }
+      );
+      await User.updateOne(
+        { _id: userId },
+        { $push: { communityjoined: savedcom._id }, $inc: { totalcom: 1 } }
+      );
+      res.status(200).json(savedcom);
+    } catch (e) {
+      res.status(400).json(e.message);
+    }
   }
 };
 
@@ -55,7 +62,9 @@ exports.joinmember = async (req, res) => {
   const isSubscriber = community.members.includes(user._id);
   try {
     if (isOwner) {
-      res.status(201).json({ message: "You can't join your own community!" });
+      res
+        .status(201)
+        .json({ message: "You already have joined your own community!" });
     } else if (isSubscriber) {
       res.status(201).json({ message: "Already Subscriber" });
     } else {

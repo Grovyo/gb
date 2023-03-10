@@ -10,6 +10,7 @@ const {
   dislikepost,
   fetchonepost,
   deletepost,
+  joinedcom,
 } = require("../controllers/post");
 
 const storage = multer.memoryStorage();
@@ -19,6 +20,7 @@ router.post("/createphoto/:userId/:commId", upload.any(), createPhoto);
 router.post("/createvideo/:userId/:commId", upload.any(), createVideo);
 router.get("/getfeed/:userId", fetchfeed);
 router.get("/fetchonepost/:postId", fetchonepost);
+router.get("/getfollowingfeed/:userId", joinedcom);
 router.get("/getpost/:userId", getpost);
 router.post("/likepost/:userId/:postId", likepost);
 router.post("/dislikepost/:userId/:postId", dislikepost);

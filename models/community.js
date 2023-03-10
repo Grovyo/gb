@@ -9,6 +9,8 @@ const communitySchema = new mongoose.Schema(
     dp: { type: String, required: true },
     members: [{ type: ObjectId, ref: "User", required: true }],
     memberscount: { type: Number, default: 0 },
+    posts: [{ type: ObjectId, ref: "Post", required: true }],
+    totalposts: { type: Number, default: 0 },
   },
   { timestamps: true }
 );

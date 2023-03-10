@@ -1,5 +1,6 @@
 const Post = require("../models/post");
 const User = require("../models/userAuth");
+const Community = require("../models/community");
 const uuid = require("uuid").v4;
 const Minio = require("minio");
 
@@ -15,7 +16,7 @@ const minioClient = new Minio.Client({
 exports.createPhoto = async (req, res) => {
   const { userId, commId } = req.params;
   const { title, desc } = req.body;
-
+  const comm = await Community.findById(commId);
   const image1 = req.files[0];
   const image2 = req.files[1];
   const image3 = req.files[2];
@@ -23,6 +24,8 @@ exports.createPhoto = async (req, res) => {
 
   if (!image1 && !image2 && !image3 && !image4) {
     res.status(400).json({ message: "Must have one image" });
+  } else if (comm.creator.toString() !== userId) {
+    res.status(400).json({ message: "You cannot post in this community." });
   } else {
     try {
       const uuidString = uuid();
@@ -83,8 +86,12 @@ exports.createPhoto = async (req, res) => {
         post: [a1, b1, c1, d1],
         contenttype: [a2, b2, c2, d2],
       });
-      await p.save();
-      res.status(200).json(p);
+      const ne = await p.save();
+      await Community.updateOne(
+        { _id: commId },
+        { $push: { posts: ne._id }, $inc: { totalposts: 1 } }
+      );
+      res.status(200).json(ne);
     } catch (e) {
       res.status(500).json({ message: e.message });
     }
@@ -96,9 +103,12 @@ exports.createVideo = async (req, res) => {
   const { userId, commId } = req.params;
   const { title, desc } = req.body;
   const { originalname, buffer, mimetype } = req.files[0];
+  const comm = await Community.findById(commId);
   const uuidString = uuid();
   if (!originalname) {
     res.status(400).json({ message: "Please upload a video" });
+  } else if (comm.creator.toString() !== userId) {
+    res.status(400).json({ message: "You cannot post in this community." });
   } else {
     try {
       const size = buffer.byteLength;
@@ -121,8 +131,12 @@ exports.createVideo = async (req, res) => {
         size: size,
         contenttype: mimetype,
       });
-      await v.save();
-      res.status(200).json(v);
+      const ne = await v.save();
+      await Community.updateOne(
+        { _id: commId },
+        { $push: { posts: ne._id }, $inc: { totalposts: 1 } }
+      );
+      res.status(200).json(ne);
     } catch (e) {
       res.status(500).json({ message: e.message });
     }
@@ -165,28 +179,49 @@ exports.fetchfeed = async (req, res) => {
     const post = await Post.find({ tags: { $in: user.interest } })
       .populate("sender", "fullname profilepic")
       .populate("community", "title dp members");
-
-    const dps = [];
-    for (let i = 0; i < post.length; i++) {
-      const a = await generatePresignedUrl(
-        "images",
-        post[i].community.dp.toString(),
-        60 * 60
-      );
-      dps.push(a);
+    if (!post) {
+      res.status(201).json({ message: "No post found" });
+    } else {
+      const dps = [];
+      for (let i = 0; i < post.length; i++) {
+        const a = await generatePresignedUrl(
+          "images",
+          post[i].community.dp.toString(),
+          60 * 60
+        );
+        dps.push(a);
+      }
+      const urls = [];
+      for (let i = 0; i < post.length; i++) {
+        const a = await generatePresignedUrl(
+          "posts",
+          post[i].post.toString(),
+          60 * 60
+        );
+        urls.push(a);
+      }
+      res.status(200).json({ data: { urls, dps, post } });
     }
-    const urls = [];
-    for (let i = 0; i < post.length; i++) {
-      const a = await generatePresignedUrl(
-        "posts",
-        post[i].post.toString(),
-        60 * 60
-      );
-      urls.push(a);
-    }
-    res.status(200).json({ data: { urls, dps, post } });
   } catch (err) {
     res.status(500).json({ message: err.message });
+  }
+};
+
+//joined community content list
+exports.joinedcom = async (req, res) => {
+  const { userId } = req.params;
+  const user = await User.findById(userId);
+  try {
+    const community = await Community.find({
+      members: { $in: user._id },
+    }).populate("posts", "post desc likes sender title tags");
+    if (!community) {
+      res.status(404).json({ message: "No coommunity found" });
+    } else {
+      res.status(200).json({ data: community });
+    }
+  } catch (e) {
+    res.status(400).json({ message: e.message });
   }
 };
 
