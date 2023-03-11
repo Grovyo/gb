@@ -1,28 +1,18 @@
 const express = require("express");
+const {
+  newconv,
+  getallconv,
+  getoneconv,
+} = require("../controllers/conversation");
 const router = express.Router();
-const Conversation = require("../models/conversation");
 
-router.post("/newconv", async (req, res) => {
-  const conv = new Conversation({
-    members: [req.body.senderId, req.body.receiverId],
-  });
-  try {
-    const savedConv = await conv.save();
-    res.status(200).json(savedConv);
-  } catch (e) {
-    res.status(500).json(e);
-  }
-});
+//new conversation private
+router.post("/newconv", newconv);
 
-router.get("/getconv/:userId", async (req, res) => {
-  try {
-    const conv = await Conversation.find({
-      members: { $in: [req.params.userId] },
-    });
-    res.status(200).json(conv);
-  } catch (e) {
-    res.status(500).json(e.message);
-  }
-});
+//get all conversations
+router.get("/getconv/:userId", getallconv);
+
+//get a conversation
+router.get("/getoneconv/:convId", getoneconv);
 
 module.exports = router;
