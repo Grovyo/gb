@@ -89,7 +89,7 @@ exports.signupmobile = async (req, res) => {
       const token = jwt.sign({ phone }, process.env.JWT_ACCOUNT_ACTIVATION, {
         expiresIn: "7d",
       });
-      await u.save();
+      await user.save();
       res.status(200).json({
         message: "signup via mobile success",
         token,
@@ -160,7 +160,7 @@ exports.filldetails = async (req, res, next) => {
     res.status(500).json({ message: "Server error" });
   }
 };
-exports.filldetailsphone = async (req, res, next) => {
+exports.filldetailsphone = async (req, res) => {
   const { originalname, buffer } = req.file;
   const { fullname, username, email, DOB } = req.body;
   const { userId } = req.params;
@@ -171,7 +171,7 @@ exports.filldetailsphone = async (req, res, next) => {
     const objectName = `${Date.now()}_${uuidString}_${originalname}`;
     await minioClient.putObject(bucketName, objectName, buffer, buffer.length);
 
-    const user = await User.findByIdAndUpdate(
+    await User.findByIdAndUpdate(
       { _id: userId },
       {
         $set: {
@@ -243,5 +243,5 @@ exports.gettest = async (req, res) => {
 };
 
 exports.test = async (req, res) => {
-  console.log(req.body.data);
+  console.log(req.body, req.file);
 };

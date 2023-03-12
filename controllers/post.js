@@ -178,7 +178,7 @@ exports.fetchfeed = async (req, res) => {
     const user = await User.findById(userId);
     const post = await Post.find({ tags: { $in: user.interest } })
       .populate("sender", "fullname profilepic")
-      .populate("community", "title dp members");
+      .populate("community", "title dp members memberscount");
     if (!post) {
       res.status(201).json({ message: "No post found" });
     } else {

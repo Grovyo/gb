@@ -26,7 +26,7 @@ const userSchema = new mongoose.Schema(
       type: String,
       maxLength: 30,
     },
-    phone: { type: Number, trim: true, maxLength: 12, minLength: 10 },
+    phone: { type: Number, trim: true },
     DOB: { type: String },
     username: {
       type: String,

@@ -25,10 +25,10 @@ router.post("/signup-mobile", signupmobile);
 router.post("/verify", verify);
 router.get("/signout", signout);
 
-router.post("/filldetails-email/:userId", upload.single("image"), filldetails);
+router.post("/filldetailsemail/:userId", upload.single("image"), filldetails);
 
 router.post(
-  "/filldetails-phone/:userId",
+  "/filldetailsphone/:userId",
   upload.single("image"),
   filldetailsphone
 );

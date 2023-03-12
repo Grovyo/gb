@@ -5,6 +5,8 @@ const bodyParser = require("body-parser");
 const cookieParser = require("cookie-parser");
 const morgan = require("morgan");
 const cors = require("cors");
+const http = require("http").Server(app);
+const io = require("socket.io")(http);
 
 //import routes
 const userAuth = require("./routes/authRoutes");
@@ -69,3 +71,21 @@ const connectApp = () => {
   }
 };
 connectApp();
+
+//socket.io
+io.on("connection", function (socket) {
+  console.log("a user connected");
+
+  socket.on("chatmessage", function (msg) {
+    io.emit("message", msg);
+    console.log("back: " + msg);
+  });
+
+  socket.on("disconnect", function () {
+    console.log("user disconnected");
+  });
+});
+
+http.listen(3000, function () {
+  console.log("Sockets on *:3000");
+});
