@@ -1,6 +1,7 @@
 const Product = require("../models/product");
 const uuid = require("uuid").v4;
 const Minio = require("minio");
+const User = require("../models/userAuth");
 
 const minioClient = new Minio.Client({
   endPoint: "192.168.1.50",
@@ -29,74 +30,87 @@ exports.create = async (req, res) => {
   const image2 = req.files[1];
   const image3 = req.files[2];
   const image4 = req.files[3];
-  console.log(req.files);
-  if (!image1 && !image2 && !image3 && !image4) {
-    res.status(400).json({ message: "Must have one image" });
+
+  const user = await User.findById(userId);
+  if (!user) {
+    res.status(400).json({ message: "User not found", success: false });
   } else {
-    try {
-      const uuidString = uuid();
-      let a, b, c, d;
-      if (image1) {
-        const bucketName = "products";
-        const objectName = `${Date.now()}_${uuidString}_${image1.originalname}`;
-        a = objectName;
-        await minioClient.putObject(
-          bucketName,
-          objectName,
-          image1.buffer,
-          image1.buffer.length
-        );
+    if (!image1 && !image2 && !image3 && !image4) {
+      res.status(400).json({ message: "Must have one image" });
+    } else {
+      try {
+        const uuidString = uuid();
+        let a, b, c, d;
+        if (image1) {
+          const bucketName = "products";
+          const objectName = `${Date.now()}_${uuidString}_${
+            image1.originalname
+          }`;
+          a = objectName;
+          await minioClient.putObject(
+            bucketName,
+            objectName,
+            image1.buffer,
+            image1.buffer.length
+          );
+        }
+        if (image2) {
+          const bucketName = "products";
+          const objectName = `${Date.now()}_${uuidString}_${
+            image2.originalname
+          }`;
+          b = objectName;
+          await minioClient.putObject(
+            bucketName,
+            objectName,
+            image2.buffer,
+            image2.buffer.length
+          );
+        }
+        if (image3) {
+          const bucketName = "products";
+          const objectName = `${Date.now()}_${uuidString}_${
+            image3.originalname
+          }`;
+          c = objectName;
+          await minioClient.putObject(
+            bucketName,
+            objectName,
+            image3.buffer,
+            image3.buffer.length
+          );
+        }
+        if (image4) {
+          const bucketName = "products";
+          const objectName = `${Date.now()}_${uuidString}_${
+            image4.originalname
+          }`;
+          d = objectName;
+          await minioClient.putObject(
+            bucketName,
+            objectName,
+            image4.buffer,
+            image4.buffer.length
+          );
+        }
+        const p = new Product({
+          name,
+          brandname,
+          desc,
+          creator: userId,
+          quantity,
+          shippingcost,
+          price,
+          inclusiveprice,
+          sellername,
+          totalstars,
+          images: [a, b, c, d],
+        });
+        await p.save();
+        res.status(200).json(p);
+      } catch (e) {
+        res.status(500).json({ message: e.message });
       }
-      if (image2) {
-        const bucketName = "products";
-        const objectName = `${Date.now()}_${uuidString}_${image2.originalname}`;
-        b = objectName;
-        await minioClient.putObject(
-          bucketName,
-          objectName,
-          image2.buffer,
-          image2.buffer.length
-        );
-      }
-      if (image3) {
-        const bucketName = "products";
-        const objectName = `${Date.now()}_${uuidString}_${image3.originalname}`;
-        c = objectName;
-        await minioClient.putObject(
-          bucketName,
-          objectName,
-          image3.buffer,
-          image3.buffer.length
-        );
-      }
-      if (image4) {
-        const bucketName = "products";
-        const objectName = `${Date.now()}_${uuidString}_${image4.originalname}`;
-        d = objectName;
-        await minioClient.putObject(
-          bucketName,
-          objectName,
-          image4.buffer,
-          image4.buffer.length
-        );
-      }
-      const p = new Product({
-        name,
-        brandname,
-        desc,
-        creator: userId,
-        quantity,
-        shippingcost,
-        price,
-        inclusiveprice,
-        sellername,
-        totalstars,
-        images: [a, b, c, d],
-      });
-      await p.save();
-      res.status(200).json(p);
-    } catch (e) {
-      res.status(500).json({ message: e.message });
     }
   }
 };
@@ -149,10 +163,10 @@ exports.getaproduct = async (req, res) => {
       res.status(404).json({ message: "Product not found" });
     } else {
       const urls = [];
-      for (let i = 0; i < product.length; i++) {
+      for (let i = 0; i < product.images.length; i++) {
         const a = await generatePresignedUrl(
-          "images",
-          product[i].images.toString(),
+          "products",
+          product.images[i].toString(),
           60 * 60
         );
         urls.push(a);

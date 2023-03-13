@@ -13,6 +13,21 @@ const minioClient = new Minio.Client({
   secretKey: "shreyansh379",
 });
 
+//function to generate a presignedurl of minio
+async function generatePresignedUrl(bucketName, objectName, expiry = 604800) {
+  try {
+    const presignedUrl = await minioClient.presignedGetObject(
+      bucketName,
+      objectName,
+      expiry
+    );
+    return presignedUrl;
+  } catch (err) {
+    console.error(err);
+    throw new Error("Failed to generate presigned URL");
+  }
+}
+
 //signup via email
 exports.signup = async (req, res) => {
   sng.setApiKey(process.env.SENDGRID_API_KEY);
@@ -77,11 +92,17 @@ exports.signupmobile = async (req, res) => {
       const token = jwt.sign({ phone }, process.env.JWT_ACCOUNT_ACTIVATION, {
         expiresIn: "7d",
       });
+      const a = await generatePresignedUrl(
+        "images",
+        user.profilepic.toString(),
+        60 * 60 * 24
+      );
       res.status(200).json({
         message: "user exists signup via mobile success",
         token,
         user,
         userexists: true,
+        a,
       });
     }
     if (!user) {
@@ -165,30 +186,50 @@ exports.filldetailsphone = async (req, res) => {
   const { fullname, username, email, DOB } = req.body;
   const { userId } = req.params;
   const uuidString = uuid();
-  try {
-    // Save image to Minio
-    const bucketName = "images";
-    const objectName = `${Date.now()}_${uuidString}_${originalname}`;
-    await minioClient.putObject(bucketName, objectName, buffer, buffer.length);
+  const user = await User.findById(userId);
 
-    await User.findByIdAndUpdate(
-      { _id: userId },
-      {
-        $set: {
-          fullname: fullname,
-          profilepic: objectName,
-          username: username,
-          email: email,
-          DOB: DOB,
+  if (userId === user._id.toString()) {
+    try {
+      // Save image to Minio
+      const bucketName = "images";
+      const objectName = `${Date.now()}_${uuidString}_${originalname}`;
+      await minioClient.putObject(
+        bucketName,
+        objectName,
+        buffer,
+        buffer.length
+      );
+
+      await User.findByIdAndUpdate(
+        { _id: userId },
+        {
+          $set: {
+            fullname: fullname,
+            profilepic: objectName,
+            username: username,
+            email: email,
+            DOB: DOB,
+          },
         },
-      },
-      { new: true }
-    );
+        { new: true }
+      );
 
-    res.status(200).json({ success: true });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: "Server error" });
+      const a = await generatePresignedUrl(
+        "images",
+        user.profilepic.toString(),
+        60 * 60 * 24
+      );
+      res.status(200).json({
+        success: true,
+        data: user,
+        url: a,
+      });
+    } catch (err) {
+      console.error(err);
+      res.status(500).json({ message: "Server error" });
+    }
+  } else {
+    res.status(500).json({ message: "Id mismatch" });
   }
 };
 

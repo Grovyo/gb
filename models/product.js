@@ -38,6 +38,7 @@ const productSchema = new mongoose.Schema({
     type: Number,
     default: 0,
   },
+  reviews: { type: Number, default: 0 },
 });
 
 module.exports = mongoose.model("Product", productSchema);

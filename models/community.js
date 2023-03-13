@@ -11,6 +11,9 @@ const communitySchema = new mongoose.Schema(
     memberscount: { type: Number, default: 0 },
     posts: [{ type: ObjectId, ref: "Post", required: true }],
     totalposts: { type: Number, default: 0 },
+    tags: { type: [String] },
+    desc: { type: String },
+    preview: { type: [String] },
   },
   { timestamps: true }
 );
