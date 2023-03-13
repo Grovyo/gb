@@ -7,6 +7,7 @@ const {
   fetchallproducts,
   getaproduct,
   deleteproduct,
+  highlight,
 } = require("../controllers/product");
 
 const storage = multer.memoryStorage();
@@ -16,5 +17,6 @@ router.post("/createproduct/:userId", upload.any(), create);
 router.get("/fetchallproducts/:userId", fetchallproducts);
 router.get("/getaproduct/:productId", getaproduct);
 router.delete("/deleteproduct/:userId/:productId", deleteproduct);
+router.post("/addhightlights/:userId/:prodId", highlight);
 
 module.exports = router;

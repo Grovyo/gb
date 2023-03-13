@@ -154,6 +154,34 @@ exports.fetchallproducts = async (req, res) => {
   }
 };
 
+//add product hightlights
+exports.highlight = async (req, res) => {
+  const { prodId, userId } = req.params;
+  const { key, value } = req.body;
+  try {
+    const user = await User.findById(userId);
+    if (!user) {
+      res.status(400).json({ message: "User not found" });
+    } else {
+      const product = await Product.findOne({ creator: user._id });
+      if (!product) {
+        res.status(400).json({ message: "Product not found" });
+      } else {
+        await Product.findByIdAndUpdate(
+          { _id: prodId },
+          {
+            $set: { producthighlightskey: key, producthighlightsvalue: value },
+          },
+          { new: true }
+        );
+        res.status(200).json({ success: true });
+      }
+    }
+  } catch (e) {
+    res.status(400).json(e.message);
+  }
+};
+
 //get a single product
 exports.getaproduct = async (req, res) => {
   const { productId } = req.params;

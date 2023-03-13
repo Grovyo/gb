@@ -21,6 +21,8 @@ const reviewSchema = new mongoose.Schema(
     reply: { type: [String] },
     content: { type: String },
     contentType: { type: String },
+    stars: { type: Number, default: 0, enum: [1, 2, 3, 4, 5], required: true },
+    desc: { type: String, maxLength: 100, required: true },
   },
   { timestamps: true }
 );

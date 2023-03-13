@@ -39,6 +39,10 @@ const productSchema = new mongoose.Schema({
     default: 0,
   },
   reviews: { type: Number, default: 0 },
+  producthighlightskey: { type: [String] },
+  producthighlightsvalue: { type: [String] },
+  percentoff: { type: Number, default: 0 },
+  questions: { type: Number, default: 0 },
 });
 
 module.exports = mongoose.model("Product", productSchema);

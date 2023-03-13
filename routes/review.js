@@ -7,6 +7,7 @@ const {
   create,
   deletereview,
   like,
+  getreviews,
 } = require("../controllers/review");
 
 const storage = multer.memoryStorage();
@@ -19,8 +20,12 @@ router.post("/addreviewimage/:userId/:productId/", upload.any(), createrw);
 router.post("/addreview/:userId/:productId/", create);
 
 //delete a review
-router.delete("/deletereview/:userId/:reviewId", deletereview);
+router.delete("/deletereview/:userId/:reviewId/:productId", deletereview);
 
 //like a review
 router.post("/likereview/:userId/:reviewId", like);
+
+//get reveiws
+router.get("/getreviews/:prodId", getreviews);
+
 module.exports = router;
